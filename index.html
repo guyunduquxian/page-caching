@@ -1,0 +1,159 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="X-UA-Compatible" content="ie=edge">
+    <title>ajax</title>
+    <style>
+        * {
+            padding: 0;
+            margin: 0;
+        }
+        .wrap {
+            width: 500px;
+            height: 500px;
+            border: 1px solid #333;
+            margin: 100px auto;
+        }
+
+        .content {
+            height: 400px;
+        }
+        .content .items {
+            display: block;
+            text-decoration: none;
+            height: 50px;
+            border-bottom: 1px solid #333;
+            display: flex;
+            align-items: center;
+            box-sizing: border-box;
+        }
+        .content .items .img img {
+            vertical-align: middle;
+            width: 35px;
+            height: 35px;
+            margin: 0 20px;
+        }
+        .content .items .bd {
+        }
+
+        .pageNum {
+        }
+        
+        .pageNum ul {
+            height: 100px;
+            display: flex;
+            justify-content: space-around;
+            align-items: center;
+            list-style: none;
+        }
+        .pageNum ul li {
+            width: 50px;
+            height: 50px;
+            border: 1px solid #333;
+            text-align: center;
+            line-height: 50px;
+            cursor:pointer;
+        }
+        .pageNum ul li:active {
+            background-color: #ccc;
+        }
+    </style>
+</head>
+<body>
+    <div class="wrap flex_column">
+        <div class="content flex_column">
+            <!--
+            <a href="" class="items flex_row">
+                <div class="img">
+                    <img src="" alt="">
+                </div>
+                <div class="bd">
+                    <p class="label">文本文本文本文本文本文本</p>
+                </div>
+            </a>
+            -->
+        </div>
+        <div class="pageNum">
+            <ul class="flex_row">
+                <li>1</li>
+                <li>2</li>
+                <li>3</li>
+                <li>4</li>
+                <li>5</li>
+                <li>6</li>
+            </ul>
+        </div>
+    </div>
+
+    <script src="myAjax.js"></script>
+    <script>
+        getData(1);
+
+        var goTo = cacheData();  //创建一个缓存对象
+
+        function getData(pageNum) {
+            myAjax({
+                url: "http://test.wulv5.com/api/v1_0/movie",  //http://test.wulv5.com/api/v1_0/movie?page=1&limit=10
+                data: {
+                   page: pageNum,
+                   limit: 8
+                },
+                success: function(data) {
+                   var doc = JSON.parse(data);  //JSON.parse()  JSON 字符串转换为对象
+                   goTo.set(pageNum, doc);   //两个参数 1.页码 2.具体数据
+                   renderData(doc);
+                }
+            });
+        }
+
+        var oLi = document.querySelectorAll(".flex_row li");
+        var oUl = document.querySelector(".flex_row");
+        var oContent = document.querySelector(".content");
+
+        //提供一个给外部作用域访问内部作用域的方法----闭包
+        function cacheData() {
+            var cache = {};  //缓存池
+            return {
+                get: function(pageNum, doc) {  //读取缓存
+                    if (pageNum in cache) {
+                        renderData(cache[pageNum]);
+                        console.log("缓存池已经存在第" + pageNum + "页的数据");
+                    } else {
+                        getData(pageNum);
+                    }
+                },
+                set: function(pageNum, doc) {  //增加缓存
+                    cache[pageNum] = doc;  //增加缓存数据到缓存池中
+                }
+            }
+        }
+
+        oLi.forEach(function(element, index) {
+            element.onclick = function(e) {
+                var pageNum = e.target.innerHTML;
+                goTo.get(pageNum);
+            }
+        });
+
+        //渲染缓存数据
+        function renderData(data) {
+            var str = '';
+            data.forEach(function(el) {
+                str += `
+                    <a href="${el.url}" class="items flex_row">
+                        <div class="img">
+                            <img src="${el.cover}">
+                        </div>
+                        <div class="bd">
+                            <p class="label">${el.title}</p>
+                        </div> 
+                    </a>
+                `;
+            });
+            oContent.innerHTML = str;
+        }
+    </script>
+</body>
+</html>
